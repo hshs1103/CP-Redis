@@ -209,7 +209,9 @@ void setKey(redisDb *db, robj *key, robj *val) {
     } else {
         dbOverwrite(db,key,val);
     }
-    incrRefCount(val);
+    if(val->comp_len == 0){
+    	incrRefCount(val);
+    }
     removeExpire(db,key);
     signalModifiedKey(db,key);
 }
