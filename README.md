@@ -19,6 +19,8 @@ Publications
 성한승, 박상현. (2019) **메모리 기반 키-값 저장소에서의 데이터 압축 저장과 병렬 스냅샷 생성 기법**. 데이타베이스연구, 35(2), 33-53.
 
 
+--------------------------------
+
 This README is just a fast *quick start* document. You can find more detailed documentation at [redis.io](https://redis.io).
 
 What is Redis?
