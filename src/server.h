@@ -1759,8 +1759,6 @@ robj *objectCommandLookupOrReply(client *c, robj *key, robj *reply);
 #define LOOKUP_NONE 0
 #define LOOKUP_NOTOUCH (1<<0)
 void dbAdd(redisDb *db, robj *key, robj *val);
-void dbAdd2(redisDb *db, robj *key, robj *val); //hshs1103
-void dbOverwrite2(redisDb *db, robj *key, robj *val); //hshs1103
 void dbOverwrite(redisDb *db, robj *key, robj *val);
 void setKey(redisDb *db, robj *key, robj *val);
 int dbExists(redisDb *db, robj *key);
