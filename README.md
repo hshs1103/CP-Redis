@@ -1,3 +1,26 @@
+CP-Redis
+--------------------------------
+Data Compression Storage and Parallel Snapshot Generation Technique in In-memory Key-Value Stores
+
+Running CP-Redis
+--------------------------------
+If you want to run Redis with the LESS method, change the redis.conf file:
+
+    appendonly no
+
+    aofmode rdb_only
+    
+    #parallel background rdb thread
+    bgrdb_thread 8
+
+
+Publications
+--------------------------------
+성한승, 박상현. (2019) **메모리 기반 키-값 저장소에서의 데이터 압축 저장과 병렬 스냅샷 생성 기법**. 데이타베이스연구, 35(2), 33-53.
+
+
+--------------------------------
+
 This README is just a fast *quick start* document. You can find more detailed documentation at [redis.io](https://redis.io).
 
 What is Redis?
