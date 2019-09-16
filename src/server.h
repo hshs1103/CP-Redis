@@ -2069,8 +2069,7 @@ void xorDigest(unsigned char *digest, void *ptr, size_t len);
 
 
 #define REDIS_AOFMODE_AOF_ONLY 0
-#define REDIS_AOFMODE_WITH_RDB 1
-#define REDIS_AOFMODE_RDB_ONLY 2
+#define REDIS_AOFMODE_RDB_ONLY 1
 
 int aofmode(char *s);
 
