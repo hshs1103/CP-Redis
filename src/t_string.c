@@ -78,8 +78,6 @@ robj *valuedeCompress(unsigned char *s, size_t inlen, size_t outlen){
 }
 
 
-
-
 /* The setGenericCommand() function implements the SET operation with different
  * options and variants. This function is called in order to implement the
  * following commands: SET, SETEX, PSETEX, SETNX.
@@ -172,9 +170,23 @@ void setCommand(client *c) {
             return;
         }
     }
+        if(sdslen(c->argv[2]->ptr) > 4){
+        	sds tmp_str = sdsdup(c->argv[2]->ptr);
+        	char *cmp_string = NULL;
+        	ssize_t n = valueCompress(tmp_str, strlen(tmp_str), &cmp_string);
+        	robj *compressObj = createStringObject(cmp_string, n);
+        	compressObj->ori_len = sdslen(tmp_str);
+        	compressObj->comp_len = n;
+        	setGenericCommand(c,flags,c->argv[1],compressObj,expire,unit,NULL,NULL);
+        	sdsfree(tmp_str);
+        }
 
-    c->argv[2] = tryObjectEncoding(c->argv[2]);
-    setGenericCommand(c,flags,c->argv[1],c->argv[2],expire,unit,NULL,NULL);
+        else {
+            c->argv[2] = tryObjectEncoding(c->argv[2]);
+            c->argv[2]->comp_len = 0;
+            c->argv[2]->ori_len = sdslen(c->argv[2]->ptr);
+            setGenericCommand(c,flags,c->argv[1],c->argv[2],expire,unit,NULL,NULL);
+        }
 }
 
 void setnxCommand(client *c) {
@@ -198,13 +210,23 @@ int getGenericCommand(client *c) {
     if ((o = lookupKeyReadOrReply(c,c->argv[1],shared.nullbulk)) == NULL)
         return C_OK;
 
-    if (o->type != OBJ_STRING) {
-        addReply(c,shared.wrongtypeerr);
-        return C_ERR;
-    } else {
-        addReplyBulk(c,o);
-        return C_OK;
-    }
+        if (o->type != OBJ_STRING) {
+            addReply(c,shared.wrongtypeerr);
+            return C_ERR;
+        } else {
+        	if(o->comp_len != 0){
+        		o = lookupKey(c->db,c->argv[1],0);
+        		robj *decompressed_value = valuedeCompress(o->ptr, o->comp_len, o->ori_len);
+
+        		addReplyBulk(c,decompressed_value);
+        		decrRefCount(decompressed_value);
+        		return C_OK;
+
+        	} else {
+                addReplyBulk(c,o);
+                return C_OK;
+        	}
+        }
 }
 
 void getCommand(client *c) {
