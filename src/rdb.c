@@ -433,7 +433,6 @@ ssize_t rdbSaveCompressRawString(rio *rdb, unsigned char *s, size_t len, size_t 
 
     if(compress_len > 0){
 
-    	//serverLog(LL_VERBOSE, "COMPRESS STRING : %s, STRING_LENGTH(param) : %d, STRING_LENGTH(sdslen): %d, STRING_LENGTH(strlen): %d, COMP_LENGTH : %d, ORI_LENGTH : %d", s, len, sdslen(s), strlen(s),compress_len, original_len);
     	n = rdbSaveLzfBlob(rdb, (void *)s, compress_len, original_len);
     	if(n == -1) return -1;
     	if(n > 0) return n;
@@ -1557,12 +1556,10 @@ int rdbParallelSave(){
     	if(k != server.thread_num -1){
     		pthread_join(p_thread[k], (void **)&p_status);
     		if(p_status == 0){
-    			//serverLog(LL_VERBOSE, "THREAD[%d] JOB SUCCESS : %d", rdbPthread[z].idx, p_status);
     			num++;
     		}
     	}
     }
-
     if(num == server.thread_num){
 
         serverLog(LL_NOTICE,"DB saved on disk(parallel rdb mode)");
@@ -2918,7 +2915,7 @@ int Parallel_rdbLoad(int flags, rdbSaveInfo *rsi){
 		return C_OK;
 	}
 	/*temp rdb*/
-	else if (flags =0){
+	else if (flags ==0){
 		for(i=0; i < server.thread_num; i++){
 			int idx = i+1;
 			memset(rdbfile, 0, sizeof(rdbfile));
@@ -2927,7 +2924,7 @@ int Parallel_rdbLoad(int flags, rdbSaveInfo *rsi){
 				continue;
 			startLoading(fp);
 			rioInitWithFile(&rdb,fp);
-			retval = rdbLoadRio(&rdb,rsi,0);
+			retval = rdbLoadRio_Compress(&rdb,rsi,0);
 			fclose(fp);
 			stopLoading();
 		}
@@ -2947,7 +2944,7 @@ int Parallel_rdbLoad(int flags, rdbSaveInfo *rsi){
 					continue;
 				startLoading(fp);
 				rioInitWithFile(&rdb,fp);
-				retval = rdbLoadRio(&rdb,rsi,0);
+				retval = rdbLoadRio_Compress(&rdb,rsi,0);
 				fclose(fp);
 				stopLoading();
 			} else {
@@ -2957,7 +2954,7 @@ int Parallel_rdbLoad(int flags, rdbSaveInfo *rsi){
 					continue;
 				startLoading(fp);
 				rioInitWithFile(&rdb,fp);
-				retval = rdbLoadRio(&rdb,rsi,0);
+				retval = rdbLoadRio_Compress(&rdb,rsi,0);
 				fclose(fp);
 				stopLoading();
 			}
@@ -3210,7 +3207,6 @@ void backgroundSaveDoneHandler(int exitcode, int bysignal) {
     case RDB_CHILD_TYPE_SOCKET:
         backgroundSaveDoneHandlerSocket(exitcode,bysignal);
         break;
-        //hshs1103
     case RDB_CHILD_TYPE_PARALLEL_RDB:
     	ParallelbackgroundSaveDoneHandlerDisk(exitcode, bysignal);
     	break;
