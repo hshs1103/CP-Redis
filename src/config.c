@@ -139,7 +139,6 @@ const char *evictPolicyToString(void) {
 //hshs1103
 int aofmode(char *s) {
     if (!strcasecmp(s,"aof_only")) return REDIS_AOFMODE_AOF_ONLY;
-    else if (!strcasecmp(s,"with_rdb")) return REDIS_AOFMODE_WITH_RDB;
     else if (!strcasecmp(s,"rdb_only")) return REDIS_AOFMODE_RDB_ONLY;
     else return -1;
 }
@@ -467,13 +466,8 @@ void loadServerConfigFromString(char *config) {
                 server.aof_state = AOF_ON;
                 server.aof_with_rdb_state = REDIS_AOF_WITH_RDB_OFF;
                 break;
-            case REDIS_AOFMODE_WITH_RDB: // with_rdb
-                /* aof_with_rdb_state = ON */
-                server.aof_state = AOF_ON;
-                server.aof_with_rdb_state = REDIS_AOF_WITH_RDB_ON;
-                break;
-            case REDIS_AOFMODE_RDB_ONLY: // with_rdb
-                /* aof_with_rdb_state = ON */
+            case REDIS_AOFMODE_RDB_ONLY: // rdb_only
+                /* aof_with_rdb_state = OFF */
                 server.aof_state = AOF_OFF;
                 server.aof_with_rdb_state = REDIS_AOF_WITH_RDB_OFF;
                 break;
