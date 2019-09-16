@@ -174,11 +174,21 @@ void setCommand(client *c) {
         	sds tmp_str = sdsdup(c->argv[2]->ptr);
         	char *cmp_string = NULL;
         	ssize_t n = valueCompress(tmp_str, strlen(tmp_str), &cmp_string);
-        	robj *compressObj = createStringObject(cmp_string, n);
-        	compressObj->ori_len = sdslen(tmp_str);
-        	compressObj->comp_len = n;
-        	setGenericCommand(c,flags,c->argv[1],compressObj,expire,unit,NULL,NULL);
-        	sdsfree(tmp_str);
+
+        	if(n != 0){
+            	robj *compressObj = createStringObject(cmp_string, n);
+            	compressObj->ori_len = sdslen(tmp_str);
+            	compressObj->comp_len = n;
+            	setGenericCommand(c,flags,c->argv[1],compressObj,expire,unit,NULL,NULL);
+            	sdsfree(tmp_str);
+        	}
+        	else {
+                c->argv[2] = tryObjectEncoding(c->argv[2]);
+                c->argv[2]->comp_len = 0;
+                c->argv[2]->ori_len = sdslen(c->argv[2]->ptr);
+                setGenericCommand(c,flags,c->argv[1],c->argv[2],expire,unit,NULL,NULL);
+                sdsfree(tmp_str);
+        	}
         }
 
         else {
@@ -218,6 +228,7 @@ int getGenericCommand(client *c) {
         		o = lookupKey(c->db,c->argv[1],0);
         		robj *decompressed_value = valuedeCompress(o->ptr, o->comp_len, o->ori_len);
 
+        		serverLog(LL_WARNING, "RETURN VAL : %s", (char *) decompressed_value->ptr);
         		addReplyBulk(c,decompressed_value);
         		decrRefCount(decompressed_value);
         		return C_OK;
