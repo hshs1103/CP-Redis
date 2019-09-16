@@ -119,6 +119,10 @@
 #define RDB_SAVE_NONE 0
 #define RDB_SAVE_AOF_PREAMBLE (1<<0)
 
+//hshs1103
+#define RDB_SAVE_AOF_WITH_RDB (1<<1)
+#define RDB_SAVE_PARALLEL 3
+
 int rdbSaveType(rio *rdb, unsigned char type);
 int rdbLoadType(rio *rdb);
 int rdbSaveTime(rio *rdb, time_t t);
@@ -129,6 +133,8 @@ int rdbLoadLenByRef(rio *rdb, int *isencoded, uint64_t *lenptr);
 int rdbSaveObjectType(rio *rdb, robj *o);
 int rdbLoadObjectType(rio *rdb);
 int rdbLoad(char *filename, rdbSaveInfo *rsi);
+int Parallel_rdbLoad(int flags, rdbSaveInfo *rsi); //hshs1103
+
 int rdbSaveBackground(char *filename, rdbSaveInfo *rsi);
 int rdbSaveToSlavesSockets(rdbSaveInfo *rsi);
 void rdbRemoveTempFile(pid_t childpid);
@@ -148,5 +154,20 @@ int rdbSaveBinaryFloatValue(rio *rdb, float val);
 int rdbLoadBinaryFloatValue(rio *rdb, float *val);
 int rdbLoadRio(rio *rdb, rdbSaveInfo *rsi, int loading_aof);
 rdbSaveInfo *rdbPopulateSaveInfo(rdbSaveInfo *rsi);
+
+//hshs1103
+int rdbSaveWithoutRename();
+void aof_with_rdb_DoneHandler(int exitcode, int bysignal);
+int rdbLoadRio_Compress(rio *rdb, rdbSaveInfo *rsi, int loading_aof);
+robj *rdbLoadCompressObject(int rdbtype, rio *rdb);
+void *rdbGenericLoadCompressStringObject(rio *rdb, int flags, size_t *lenptr);
+ssize_t rdbSaveCompressObject(rio *rdb, robj *o);
+ssize_t rdbSaveCompressStringObject(rio *rdb, robj *obj);
+ssize_t rdbSaveCompressRawString(rio *rdb, unsigned char *s, size_t len, size_t original_len, size_t compress_len);
+int rdbSaveParallelBackground(char *filename, rdbSaveInfo *rsi);
+int rdbParallelSave();
+void rdbRemoveAllTempFile(pid_t childpid, int file_count);
+void rdbRenameAllTempFile(pid_t childpid, int file_count);
+void rdbRenameAllTempFile2(pid_t childpid, int file_count);
 
 #endif
