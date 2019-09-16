@@ -1643,11 +1643,6 @@ void aofmodeCommand(client *c){
         serverLog(LL_WARNING, "AOFMODE : aof_only");
         addReplyStatusFormat(c,"AOFMODE : AOF_ONLY");
         break;
-    case REDIS_AOFMODE_WITH_RDB:
-        server.aof_with_rdb_state = REDIS_AOF_WITH_RDB_ON;
-        serverLog(LL_WARNING, "AOFMODE : with_rdb");
-        addReplyStatusFormat(c,"AOFMODE : WITH_RDB");
-        break;
     case REDIS_AOFMODE_RDB_ONLY:
         server.aof_with_rdb_state = REDIS_AOF_WITH_RDB_OFF;
         serverLog(LL_WARNING, "AOFMODE : rdb_only");
