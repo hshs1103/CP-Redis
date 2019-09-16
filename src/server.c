@@ -3723,7 +3723,7 @@ void loadDataFromDisk(void) {
     		}
 
     		//case5 tmp != dump
-    		else {serverLog(
+    		else {
     	        if (Parallel_rdbLoad(3,NULL) == C_OK) {
     	            serverLog(LL_WARNING,"DB loaded from disk: %.3f seconds",
     	                (float)(ustime()-start)/1000000);  //NOTICE
