@@ -2627,7 +2627,7 @@ int prepareForShutdown(int flags) {
         		serverLog(LL_WARNING,"Error trying to save the DB, can't exit.");
         		return C_ERR;
         	}   else {
-        		rdbRenameAllTempFile((int) getpid(), server.thread_num);
+        		rdbRenameAllTempFile(server.thread_num);
                 }
         	} else {
             if (rdbSave(server.rdb_filename,rsiptr) != C_OK) {

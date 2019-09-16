@@ -166,8 +166,12 @@ ssize_t rdbSaveCompressStringObject(rio *rdb, robj *obj);
 ssize_t rdbSaveCompressRawString(rio *rdb, unsigned char *s, size_t len, size_t original_len, size_t compress_len);
 int rdbSaveParallelBackground(char *filename, rdbSaveInfo *rsi);
 int rdbParallelSave();
-void rdbRemoveAllTempFile(pid_t childpid, int file_count);
-void rdbRenameAllTempFile(pid_t childpid, int file_count);
-void rdbRenameAllTempFile2(pid_t childpid, int file_count);
+void rdbRemoveAllTempFile(int file_count);
+void rdbRenameAllTempFile(int file_count);
+int checkdumpfile(int file_count);
+int checktempfile(int file_count);
+int get_dumpfile_cnt();
+int get_tempfile_cnt();
+
 
 #endif

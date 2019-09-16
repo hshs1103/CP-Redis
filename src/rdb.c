@@ -1450,7 +1450,7 @@ werr: /* Write error. */
 
 
 //hshs1103 parallel
-void *test_function(void *data){
+void *prdb_job(void *data){
 
 	char tmpfile[256];
 	FILE *fp;
@@ -1494,7 +1494,7 @@ void *test_function(void *data){
 
 	/*tmp rdb file*/
 
-	snprintf(tmpfile, 256, "temp%d-%d.rdb", (int) idx, (int) getpid());
+	snprintf(tmpfile, 256, "temp%d.rdb", (int) idx, (int) getpid());
 	fp = fopen(tmpfile, "w");
 	if (!fp) {
 		serverLog(LL_WARNING, "Failed opening .rdb for saving: %s",
@@ -1546,9 +1546,9 @@ int rdbParallelSave(){
     for(j=0;j<server.thread_num; j++){
     	int idx = j+1;
     	if(j != server.thread_num - 1){
-    		thr_id = pthread_create(&p_thread[j], NULL, test_function, (void *) idx);
+    		thr_id = pthread_create(&p_thread[j], NULL, prdb_job, (void *) idx);
     	} else {
-    		m_status = test_function((void *)idx);//&rdbPthread[j]);
+    		m_status = prdb_job((void *)idx);//&rdbPthread[j]);
     		if(m_status ==0) num++;
     	}
     }
@@ -1830,18 +1830,18 @@ void rdbRemoveTempFile(pid_t childpid) {
 }
 
 //hshs1103
-void rdbRemoveAllTempFile(pid_t childpid, int file_count){
+void rdbRemoveAllTempFile(int file_count){
 
 	char tmpfile[256];
 	int i;
 	for(i=0; i < file_count; i++){
 		memset(tmpfile, 0, sizeof(tmpfile));
-		snprintf(tmpfile, sizeof(tmpfile), "temp%d-%d.rdb", i+1, childpid);
+		snprintf(tmpfile, sizeof(tmpfile), "temp%d.rdb", i+1);
 		unlink(tmpfile);
 	}
 }
 
-void rdbRenameAllTempFile(pid_t childpid, int file_count){
+void rdbRenameAllTempFile(int file_count){
 
 	char tmpfile[256];
 	char dumpfile[256];
@@ -1849,7 +1849,7 @@ void rdbRenameAllTempFile(pid_t childpid, int file_count){
 	for(i=0; i < file_count; i++){
 		memset(tmpfile, 0, sizeof(tmpfile));
 		memset(dumpfile, 0, sizeof(dumpfile));
-		snprintf(tmpfile, sizeof(tmpfile), "temp%d-%d.rdb", i+1, childpid);
+		snprintf(tmpfile, sizeof(tmpfile), "temp%d.rdb", i+1);
 		snprintf(dumpfile, sizeof(dumpfile), "dump%d.rdb", i+1);
 
 		if(rename(tmpfile, dumpfile) == -1){
@@ -2918,7 +2918,7 @@ int Parallel_rdbLoad(int flags, rdbSaveInfo *rsi){
 		return C_OK;
 	}
 	/*temp rdb*/
-	else {
+	else if (flags =0){
 		for(i=0; i < server.thread_num; i++){
 			int idx = i+1;
 			memset(rdbfile, 0, sizeof(rdbfile));
@@ -2933,8 +2933,102 @@ int Parallel_rdbLoad(int flags, rdbSaveInfo *rsi){
 		}
 		return C_OK;
 	}
+		/*exception case*/
+	else {
+		int temp_cnt = get_tempfile_cnt();
+		int dump_cnt = get_dumpfile_cnt();
+		int read_dump = dump_cnt - temp_cnt;
+		for (i=0; i < server.thread_num; i++){
+			int idx = i+1;
+			if (i < read_dump){
+				memset(rdbfile, 0, sizeof(rdbfile));
+				snprintf(rdbfile, 256, "dump%d.rdb",idx);
+				if((fp = fopen(rdbfile, "r")) == NULL)
+					continue;
+				startLoading(fp);
+				rioInitWithFile(&rdb,fp);
+				retval = rdbLoadRio(&rdb,rsi,0);
+				fclose(fp);
+				stopLoading();
+			} else {
+				memset(rdbfile, 0, sizeof(rdbfile));
+				snprintf(rdbfile, 256, "temp%d.rdb",idx);
+				if((fp = fopen(rdbfile, "r")) == NULL)
+					continue;
+				startLoading(fp);
+				rioInitWithFile(&rdb,fp);
+				retval = rdbLoadRio(&rdb,rsi,0);
+				fclose(fp);
+				stopLoading();
+			}
+		}
+		return C_OK;
+	}
 }
 
+int get_dumpfile_cnt() {
+	int i;
+	char rdbfile[256];
+	int dump_count =0;
+
+	for(i=0; i < server.thread_num; i++){
+
+		memset(rdbfile, 0, sizeof(rdbfile));
+		snprintf(rdbfile, 256, "dump%d.rdb",i+1);
+		if (access(rdbfile, F_OK) == 0){
+			dump_count ++;
+		}
+	}
+
+	return dump_count;
+
+}
+int get_tempfile_cnt() {
+	int i;
+	char rdbfile[256];
+	int temp_count =0;
+	for(i=0; i < server.thread_num; i++){
+
+		memset(rdbfile, 0, sizeof(rdbfile));
+		snprintf(rdbfile, 256, "temp%d.rdb",i+1);
+		if (access(rdbfile, F_OK) == 0){
+			temp_count++;
+		}
+	}
+	return temp_count;
+}
+
+int checkdumpfile(int file_count){
+	int i;
+	char rdbfile[256];
+
+	for(i=0; i < file_count; i++){
+
+		memset(rdbfile, 0, sizeof(rdbfile));
+		snprintf(rdbfile, 256, "dump%d.rdb",i+1);
+		if (access(rdbfile, F_OK) == 0){
+			return C_OK;
+		}
+	}
+
+	return C_ERR;
+}
+int checktempfile(int file_count){
+
+	int i;
+	char rdbfile[256];
+
+	for(i=0; i < file_count; i++){
+
+		memset(rdbfile, 0, sizeof(rdbfile));
+		snprintf(rdbfile, 256, "temp%d.rdb",i+1);
+		if (access(rdbfile, F_OK) == 0){
+			return C_OK;
+		}
+	}
+
+	return C_ERR;
+}
 
 
 /* A background saving child (BGSAVE) terminated its work. Handle this.
@@ -2989,7 +3083,7 @@ void ParallelbackgroundSaveDoneHandlerDisk(int exitcode, int bysignal) {
         serverLog(LL_WARNING,
             "Parallel Background saving terminated by signal %d", bysignal);
         latencyStartMonitor(latency);
-        rdbRemoveAllTempFile(server.rdb_child_pid, server.thread_num);
+        rdbRemoveAllTempFile(server.thread_num);
         latencyEndMonitor(latency);
         latencyAddSampleIfNeeded("rdb-unlink-temp-file",latency);
         /* SIGUSR1 is whitelisted, so we have a way to kill a child without
@@ -2999,7 +3093,7 @@ void ParallelbackgroundSaveDoneHandlerDisk(int exitcode, int bysignal) {
     }
 
     /*renaming rdb file*/
-   	rdbRenameAllTempFile(server.rdb_child_pid, server.thread_num);
+   	rdbRenameAllTempFile(server.thread_num);
 
 
     server.rdb_child_pid = -1;
