@@ -227,8 +227,6 @@ int getGenericCommand(client *c) {
         	if(o->comp_len != 0){
         		o = lookupKey(c->db,c->argv[1],0);
         		robj *decompressed_value = valuedeCompress(o->ptr, o->comp_len, o->ori_len);
-
-        		serverLog(LL_WARNING, "RETURN VAL : %s", (char *) decompressed_value->ptr);
         		addReplyBulk(c,decompressed_value);
         		decrRefCount(decompressed_value);
         		return C_OK;
