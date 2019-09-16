@@ -42,6 +42,44 @@ static int checkStringLength(client *c, long long size) {
     return C_OK;
 }
 
+//hshs1103 compression
+ssize_t valueCompress(unsigned char *s, size_t len, void **comp_string){
+
+		size_t comprlen, outlen;
+
+		outlen = len - 4;
+
+		if((*comp_string = zmalloc(outlen+1)) == NULL){
+			return 0;
+		}
+		comprlen = lzf_compress(s, len, *comp_string, outlen);
+		*comp_string = zrealloc(*comp_string, comprlen+1);
+
+		if(comprlen == 0) {
+			zfree(*comp_string);
+			return 0;
+		}
+		else {
+			return comprlen;
+		}
+
+}
+
+//inlen : compress_length
+//outlen : original_length
+robj *valuedeCompress(unsigned char *s, size_t inlen, size_t outlen){
+
+	//serverLog(LL_VERBOSE, "decompress string : %s, compress length : %zu, original length : %zu", s, inlen, outlen);
+
+	char *val = NULL;
+	val = sdsnewlen(NULL, outlen);
+	lzf_decompress(s,inlen, val, outlen);
+		return createObject(OBJ_STRING, val);
+}
+
+
+
+
 /* The setGenericCommand() function implements the SET operation with different
  * options and variants. This function is called in order to implement the
  * following commands: SET, SETEX, PSETEX, SETNX.
