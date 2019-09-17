@@ -4,7 +4,7 @@ Data Compression Storage and Parallel Snapshot Generation Technique in In-memory
 
 Running CP-Redis
 --------------------------------
-If you want to run Redis with the LESS method, change the redis.conf file:
+If you want to run CP-Redis, change the redis.conf file:
 
     appendonly no
 
